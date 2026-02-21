@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DirectionsRun
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
@@ -27,6 +28,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -59,6 +61,7 @@ import com.nursingapp.ui.theme.NursingAppTheme
 fun ActivityCard(
     item: ActivityItem,
     modifier: Modifier = Modifier,
+    onDeleteClick: (ActivityItem) -> Unit // 1. Add this parameter
 ) {
     var isExpanded by rememberSaveable(item.id) { mutableStateOf(false) }
 
@@ -80,19 +83,13 @@ fun ActivityCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .semantics {
-                contentDescription = "${item.name}. ${item.category.displayName}. Duration: ${item.duration}. " +
-                    "Mobility: ${item.mobilityRequired.displayName}. " +
-                    if (isExpanded) "Tap to collapse." else "Tap to see details."
-                role = Role.Button
-            }
             .clickable { isExpanded = !isExpanded },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            // Top row: category badge + expand icon
+            // Top row: category badge + (Delete Icon if custom) + expand icon
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -109,11 +106,28 @@ fun ActivityCard(
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                     )
                 }
-                Icon(
-                    imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                    contentDescription = if (isExpanded) "Collapse" else "Expand",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    // 2. Add Delete Button for custom items
+                    if (item.isCustom) {
+                        IconButton(
+                            onClick = { onDeleteClick(item) }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Delete activity",
+                                tint = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+
+                    Icon(
+                        imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                        contentDescription = if (isExpanded) "Collapse" else "Expand",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(10.dp))
@@ -227,13 +241,15 @@ private fun ActivityCardPreview() {
             item = ActivityItem(
                 id = 1,
                 name = "Watercolor Painting",
-                description = "Create simple, relaxing watercolor paintings of flowers, landscapes, or abstract patterns.",
+                description = "Details...",
                 duration = "45–60 min",
                 mobilityRequired = MobilityLevel.SEATED,
-                supplies = listOf("Watercolor paints", "Paper", "Brushes", "Water cups"),
+                supplies = listOf("Paints"),
                 category = ActivityCategory.ART_CRAFTS,
+                isCustom = true // Test with custom true to see delete icon
             ),
             modifier = Modifier.padding(16.dp),
+            onDeleteClick = {} // Add empty lambda for preview
         )
     }
 }

@@ -19,6 +19,7 @@ data class ActivityItem(
     val mobilityRequired: MobilityLevel,
     val supplies: List<String>,
     val category: ActivityCategory,
+    val isCustom: Boolean = false
 )
 
 enum class MobilityLevel(val displayName: String, val emoji: String) {

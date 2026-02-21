@@ -5,31 +5,17 @@ import android.print.PrintAttributes
 import android.print.PrintManager
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Print
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -37,9 +23,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.nursingapp.data.ActivityCategory
 import com.nursingapp.data.ActivityItem
+import com.nursingapp.data.ActivityRepository
 import com.nursingapp.data.allActivityItems
 import com.nursingapp.ui.components.ActivityCard
 import com.nursingapp.ui.theme.NursingAppTheme
+import kotlinx.coroutines.launch
+import java.util.Date
 
 private enum class ActivityFilter(val label: String, val category: ActivityCategory?) {
     ALL("All", null),
@@ -50,20 +39,22 @@ private enum class ActivityFilter(val label: String, val category: ActivityCateg
     EXERCISE("Exercise", ActivityCategory.EXERCISE),
 }
 
-/**
- * Full-screen list of all activity suggestions, filterable by category.
- * A print action button lets coordinators print the activity list with supplies.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ActivityListScreen(modifier: Modifier = Modifier) {
+fun ActivityListScreen(
+    modifier: Modifier = Modifier,
+    onNavigateToAddActivity: () -> Unit
+) {
     var selectedFilter by rememberSaveable { mutableStateOf(ActivityFilter.ALL) }
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
+    val combinedActivities = allActivityItems + ActivityRepository.customActivities
 
     val filteredItems = if (selectedFilter.category == null) {
-        allActivityItems
+        combinedActivities
     } else {
-        allActivityItems.filter { it.category == selectedFilter.category }
+        combinedActivities.filter { it.category == selectedFilter.category }
     }
 
     Scaffold(
@@ -77,11 +68,18 @@ fun ActivityListScreen(modifier: Modifier = Modifier) {
                     )
                 },
                 actions = {
+                    // NEW: Refresh Button to fetch from "API"
+                    IconButton(onClick = {
+                        scope.launch {
+                            // You can implement fetchNewActivity in ActivityRepository
+                            // ActivityRepository.fetchNewActivity(context)
+                        }
+                    }) {
+                        Icon(imageVector = Icons.Default.Refresh, contentDescription = "Refresh Activities")
+                    }
+
                     IconButton(onClick = { printActivityList(context as Activity, filteredItems) }) {
-                        Icon(
-                            imageVector = Icons.Default.Print,
-                            contentDescription = "Print activity list",
-                        )
+                        Icon(imageVector = Icons.Default.Print, contentDescription = "Print")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -91,21 +89,24 @@ fun ActivityListScreen(modifier: Modifier = Modifier) {
                 ),
             )
         },
+        floatingActionButton = {
+            // NEW: Add Button
+            FloatingActionButton(
+                onClick = onNavigateToAddActivity,
+                containerColor = MaterialTheme.colorScheme.secondary
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Add Activity")
+            }
+        },
         modifier = modifier,
     ) { innerPadding ->
         LazyColumn(
-            contentPadding = PaddingValues(
-                start = 16.dp,
-                end = 16.dp,
-                top = 8.dp,
-                bottom = 24.dp,
-            ),
+            contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
         ) {
-            // Filter chips
             item {
                 LazyRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -121,7 +122,6 @@ fun ActivityListScreen(modifier: Modifier = Modifier) {
                 }
             }
 
-            // Count row
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -135,9 +135,13 @@ fun ActivityListScreen(modifier: Modifier = Modifier) {
                 }
             }
 
-            // Activity cards
             items(filteredItems, key = { it.id }) { activityItem ->
-                ActivityCard(item = activityItem)
+                ActivityCard(
+                    item = activityItem,
+                    onDeleteClick = { itemToDelete ->
+                        ActivityRepository.deleteActivity(context, itemToDelete)
+                    }
+                )
             }
         }
     }
@@ -163,7 +167,7 @@ private fun printActivityList(activity: Activity, items: List<ActivityItem>) {
             </style>
             </head><body>
             <h1>Nursing App – Activity List</h1>
-            <p style="color:#555;">Printed: ${java.util.Date()}</p>
+            <p style="color:#555;">Printed: ${Date()}</p>
             """.trimIndent(),
         )
         items.forEach { item ->
@@ -196,6 +200,9 @@ private fun printActivityList(activity: Activity, items: List<ActivityItem>) {
 @Composable
 private fun ActivityListScreenPreview() {
     NursingAppTheme {
-        ActivityListScreen()
+        ActivityListScreen(
+            modifier = Modifier.fillMaxSize(),
+            onNavigateToAddActivity = { /* Do nothing in preview */ }
+        )
     }
 }
