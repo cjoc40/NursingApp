@@ -1,5 +1,6 @@
 package com.nursingapp.ui.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -59,10 +60,13 @@ fun AddSongScreen(
 
         Button(
             onClick = {
-                if (title.isNotBlank() && artist.isNotBlank() && spotifyLink.contains("spotify.com")) {
-                    // Pass context here so it can be saved to SharedPreferences
+                val isLinkValid = spotifyLink.isNotBlank()
+
+                if (title.isNotBlank() && artist.isNotBlank() && isLinkValid) {
                     SongRepository.addSong(context, title, artist, spotifyLink)
                     onSongAdded()
+                } else {
+                    Toast.makeText(context, "Please enter a Title, Artist, and Link/ID", Toast.LENGTH_SHORT).show()
                 }
             },
             modifier = Modifier.fillMaxWidth()

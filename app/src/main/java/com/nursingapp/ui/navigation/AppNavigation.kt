@@ -117,11 +117,10 @@ fun AppNavigation() {
                 ActivityListScreen()
             }
 
-            // 3. Add Song Screen (Fixed route and added logic)
+            // 3. Add Song Screen
             composable(AppDestination.AddSong.route) {
                 AddSongScreen(
                     onSongAdded = {
-                        // Returns to the previous screen once the song is saved
                         navController.popBackStack()
                     }
                 )

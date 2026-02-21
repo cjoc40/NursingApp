@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Print
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -32,6 +33,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -42,28 +44,25 @@ import androidx.compose.ui.unit.dp
 import com.nursingapp.data.QuizCategory
 import com.nursingapp.data.QuizItem
 import com.nursingapp.data.allQuizItems
+import com.nursingapp.data.SongRepository
 import com.nursingapp.ui.components.QuizCard
 import com.nursingapp.ui.theme.NursingAppTheme
-import com.nursingapp.data.SongRepository
+import kotlinx.coroutines.launch
 import java.util.Date
 
+// Removed ALL from the enum
 private enum class QuizFilter(val label: String) {
-    ALL("All"),
     TRIVIA("Trivia"),
     GUESS_THE_SONG("Guess the Song"),
 }
 
-/**
- * Full-screen list of all quiz items, filterable by category.
- * A print action button in the top bar lets coordinators print the full quiz list.
- */
 @Composable
 fun SongQuizScreen(
     onAddSongClick: () -> Unit
 ) {
+    val context = LocalContext.current
 
     Column(modifier = Modifier.fillMaxSize()) {
-
         Button(
             onClick = onAddSongClick,
             modifier = Modifier
@@ -74,26 +73,33 @@ fun SongQuizScreen(
         }
 
         LazyColumn {
-            items(SongRepository.songs) { song ->
+            items(SongRepository.songs, key = { it.id }) { song ->
                 QuizCard(
                     item = song,
-                    modifier = Modifier.padding(16.dp)
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    onDeleteClick = { itemToDelete ->
+                        SongRepository.deleteSong(context, itemToDelete)
+                    }
                 )
             }
         }
     }
 }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QuizListScreen(modifier: Modifier = Modifier, onNavigateToAddSong: () -> Unit) {
-    var selectedFilter by rememberSaveable { mutableStateOf(QuizFilter.ALL) }
+    // Defaulting to Trivia since "All" is removed
+    var selectedFilter by rememberSaveable { mutableStateOf(QuizFilter.TRIVIA) }
     val context = LocalContext.current
+
     val combinedItems = allQuizItems + SongRepository.songs
+
     val filteredItems = when (selectedFilter) {
-        QuizFilter.ALL -> combinedItems
         QuizFilter.TRIVIA -> combinedItems.filter { it.category == QuizCategory.TRIVIA }
         QuizFilter.GUESS_THE_SONG -> combinedItems.filter { it.category == QuizCategory.GUESS_THE_SONG }
     }
+    val scope = rememberCoroutineScope()
 
     Scaffold(
         topBar = {
@@ -107,10 +113,13 @@ fun QuizListScreen(modifier: Modifier = Modifier, onNavigateToAddSong: () -> Uni
                 },
                 actions = {
                     IconButton(onClick = { printQuizList(context as Activity, filteredItems) }) {
-                        Icon(
-                            imageVector = Icons.Default.Print,
-                            contentDescription = "Print quiz list",
-                        )
+                        Icon(imageVector = Icons.Default.Print, contentDescription = "Print")
+                    }
+
+                    IconButton(onClick = {
+                        scope.launch { SongRepository.fetchNewTrivia(context) }
+                    }) {
+                        Icon(imageVector = Icons.Default.Refresh, contentDescription = "Get New Trivia")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -131,22 +140,17 @@ fun QuizListScreen(modifier: Modifier = Modifier, onNavigateToAddSong: () -> Uni
         modifier = modifier,
     ) { innerPadding ->
         LazyColumn(
-            contentPadding = PaddingValues(
-                start = 16.dp,
-                end = 16.dp,
-                top = 8.dp,
-                bottom = 24.dp,
-            ),
+            contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
         ) {
-            // Filter chips
+            // Category Filter Chips
             item {
                 LazyRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    contentPadding = PaddingValues(vertical = 4.dp),
+                    contentPadding = PaddingValues(vertical = 4.dp)
                 ) {
                     items(QuizFilter.entries) { filter ->
                         FilterChip(
@@ -158,23 +162,28 @@ fun QuizListScreen(modifier: Modifier = Modifier, onNavigateToAddSong: () -> Uni
                 }
             }
 
-            // Count row
+            // Count summary
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End,
                 ) {
                     Text(
-                        text = "${filteredItems.size} questions",
+                        text = "${filteredItems.size} items",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
 
-            // Quiz cards
+            // Filtered results
             items(filteredItems, key = { it.id }) { quizItem ->
-                QuizCard(item = quizItem)
+                QuizCard(
+                    item = quizItem,
+                    onDeleteClick = { itemToDelete ->
+                        SongRepository.deleteSong(context, itemToDelete)
+                    }
+                )
             }
         }
     }
@@ -231,7 +240,6 @@ private fun printQuizList(activity: Activity, items: List<QuizItem>) {
 private fun QuizListScreenPreview() {
     NursingAppTheme {
         QuizListScreen(
-            modifier = Modifier,
             onNavigateToAddSong = { }
         )
     }
