@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import com.nursingapp.data.SongRepository
 import com.nursingapp.ui.navigation.AppNavigation
 import com.nursingapp.ui.theme.NursingAppTheme
 
@@ -17,6 +18,7 @@ import com.nursingapp.ui.theme.NursingAppTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        SongRepository.initialize(this)
         enableEdgeToEdge()
         setContent {
             NursingAppTheme {

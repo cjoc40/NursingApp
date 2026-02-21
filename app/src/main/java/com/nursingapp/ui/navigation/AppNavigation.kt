@@ -22,6 +22,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.nursingapp.ui.screens.ActivityListScreen
+import com.nursingapp.ui.screens.AddSongScreen
 import com.nursingapp.ui.screens.QuizListScreen
 
 /** Sealed class describing each top-level navigation destination. */
@@ -43,6 +44,12 @@ sealed class AppDestination(
         label = "Activities",
         selectedIcon = Icons.Filled.SelfImprovement,
         unselectedIcon = Icons.Outlined.SelfImprovement,
+    )
+    data object AddSong : AppDestination(
+        route = "add_song",
+        label = "Add Song",
+        selectedIcon = Icons.Filled.SelfImprovement,
+        unselectedIcon = Icons.Outlined.SelfImprovement
     )
 }
 
@@ -93,15 +100,30 @@ fun AppNavigation() {
         NavHost(
             navController = navController,
             startDestination = AppDestination.Quizzes.route,
+            // Applying padding here ensures all screens respect the bottom bar space
+            modifier = Modifier.padding(innerPadding)
         ) {
+            // 1. Main Quiz List Screen
             composable(AppDestination.Quizzes.route) {
                 QuizListScreen(
-                    modifier = Modifier.padding(innerPadding),
+                    onNavigateToAddSong = {
+                        navController.navigate(AppDestination.AddSong.route)
+                    }
                 )
             }
+
+            // 2. Activities Screen
             composable(AppDestination.Activities.route) {
-                ActivityListScreen(
-                    modifier = Modifier.padding(innerPadding),
+                ActivityListScreen()
+            }
+
+            // 3. Add Song Screen (Fixed route and added logic)
+            composable(AppDestination.AddSong.route) {
+                AddSongScreen(
+                    onSongAdded = {
+                        // Returns to the previous screen once the song is saved
+                        navController.popBackStack()
+                    }
                 )
             }
         }

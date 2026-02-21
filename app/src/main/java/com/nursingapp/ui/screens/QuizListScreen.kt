@@ -6,6 +6,7 @@ import android.print.PrintManager
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,9 +16,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Print
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -30,7 +34,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -41,6 +44,8 @@ import com.nursingapp.data.QuizItem
 import com.nursingapp.data.allQuizItems
 import com.nursingapp.ui.components.QuizCard
 import com.nursingapp.ui.theme.NursingAppTheme
+import com.nursingapp.data.SongRepository
+import java.util.Date
 
 private enum class QuizFilter(val label: String) {
     ALL("All"),
@@ -52,16 +57,42 @@ private enum class QuizFilter(val label: String) {
  * Full-screen list of all quiz items, filterable by category.
  * A print action button in the top bar lets coordinators print the full quiz list.
  */
+@Composable
+fun SongQuizScreen(
+    onAddSongClick: () -> Unit
+) {
+
+    Column(modifier = Modifier.fillMaxSize()) {
+
+        Button(
+            onClick = onAddSongClick,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Text("➕ Add Song")
+        }
+
+        LazyColumn {
+            items(SongRepository.songs) { song ->
+                QuizCard(
+                    item = song,
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
+        }
+    }
+}
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun QuizListScreen(modifier: Modifier = Modifier) {
+fun QuizListScreen(modifier: Modifier = Modifier, onNavigateToAddSong: () -> Unit) {
     var selectedFilter by rememberSaveable { mutableStateOf(QuizFilter.ALL) }
     val context = LocalContext.current
-
+    val combinedItems = allQuizItems + SongRepository.songs
     val filteredItems = when (selectedFilter) {
-        QuizFilter.ALL -> allQuizItems
-        QuizFilter.TRIVIA -> allQuizItems.filter { it.category == QuizCategory.TRIVIA }
-        QuizFilter.GUESS_THE_SONG -> allQuizItems.filter { it.category == QuizCategory.GUESS_THE_SONG }
+        QuizFilter.ALL -> combinedItems
+        QuizFilter.TRIVIA -> combinedItems.filter { it.category == QuizCategory.TRIVIA }
+        QuizFilter.GUESS_THE_SONG -> combinedItems.filter { it.category == QuizCategory.GUESS_THE_SONG }
     }
 
     Scaffold(
@@ -88,6 +119,14 @@ fun QuizListScreen(modifier: Modifier = Modifier) {
                     actionIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                 ),
             )
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = onNavigateToAddSong,
+                containerColor = MaterialTheme.colorScheme.primary
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Add Song")
+            }
         },
         modifier = modifier,
     ) { innerPadding ->
@@ -159,7 +198,7 @@ private fun printQuizList(activity: Activity, items: List<QuizItem>) {
             </style>
             </head><body>
             <h1>Nursing App – Quiz List</h1>
-            <p style="color:#555;">Printed: ${java.util.Date()}</p>
+            <p style="color:#555;">Printed: ${Date()}</p>
             """.trimIndent(),
         )
         items.forEach { item ->
@@ -191,6 +230,9 @@ private fun printQuizList(activity: Activity, items: List<QuizItem>) {
 @Composable
 private fun QuizListScreenPreview() {
     NursingAppTheme {
-        QuizListScreen()
+        QuizListScreen(
+            modifier = Modifier,
+            onNavigateToAddSong = { }
+        )
     }
 }
