@@ -1,0 +1,26 @@
+# Built artifacts
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# Build directories
+/build/
+app/build/
+.gradle/
+local.properties
+
+# IDE files
+.idea/
+*.iml
+*.iws
+*.ipr
+.DS_Store
+
+# Android Studio generated
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Kotlin
+kotlin-js-store/
