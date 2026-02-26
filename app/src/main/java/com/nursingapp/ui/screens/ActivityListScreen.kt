@@ -12,22 +12,18 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Print
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.nursingapp.data.ActivityCategory
 import com.nursingapp.data.ActivityItem
 import com.nursingapp.data.ActivityRepository
 import com.nursingapp.data.allActivityItems
 import com.nursingapp.ui.components.ActivityCard
-import com.nursingapp.ui.theme.NursingAppTheme
-import kotlinx.coroutines.launch
 import java.util.Date
 
 private enum class ActivityFilter(val label: String, val category: ActivityCategory?) {
@@ -47,10 +43,8 @@ fun ActivityListScreen(
 ) {
     var selectedFilter by rememberSaveable { mutableStateOf(ActivityFilter.ALL) }
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
 
     val combinedActivities = allActivityItems + ActivityRepository.customActivities
-
     val filteredItems = if (selectedFilter.category == null) {
         combinedActivities
     } else {
@@ -80,7 +74,6 @@ fun ActivityListScreen(
             )
         },
         floatingActionButton = {
-            // NEW: Add Button
             FloatingActionButton(
                 onClick = onNavigateToAddActivity,
                 containerColor = MaterialTheme.colorScheme.secondary
@@ -90,22 +83,54 @@ fun ActivityListScreen(
         },
         modifier = modifier,
     ) { innerPadding ->
-        LazyColumn(
-            contentPadding = PaddingValues(
-                start = 16.dp,
-                top = 16.dp,
-                end = 16.dp,
-                bottom = innerPadding.calculateBottomPadding() + 16.dp // Adds Navbar height + extra gap
-            ),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = innerPadding.calculateTopPadding()),
+                .padding(top = innerPadding.calculateTopPadding())
         ) {
-            item {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(
+                    start = 16.dp,
+                    end = 16.dp,
+                    bottom = innerPadding.calculateBottomPadding() + 16.dp
+                ),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                item { Spacer(modifier = Modifier.height(72.dp)) }
+
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End,
+                    ) {
+                        Text(
+                            text = "${filteredItems.size} activities",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+
+                items(filteredItems, key = { it.id }) { activityItem ->
+                    ActivityCard(
+                        item = activityItem,
+                        onDeleteClick = { itemToDelete ->
+                            ActivityRepository.deleteActivity(context, itemToDelete)
+                        }
+                    )
+                }
+            }
+
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = MaterialTheme.colorScheme.surface,
+                tonalElevation = 3.dp
+            ) {
                 LazyRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    contentPadding = PaddingValues(vertical = 4.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     items(ActivityFilter.entries) { filter ->
                         FilterChip(
@@ -116,33 +141,10 @@ fun ActivityListScreen(
                     }
                 }
             }
-
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
-                ) {
-                    Text(
-                        text = "${filteredItems.size} activities",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-
-            items(filteredItems, key = { it.id }) { activityItem ->
-                ActivityCard(
-                    item = activityItem,
-                    onDeleteClick = { itemToDelete ->
-                        ActivityRepository.deleteActivity(context, itemToDelete)
-                    }
-                )
-            }
         }
     }
 }
 
-/** Generates an HTML representation of the activity list and sends it to the system print dialog. */
 private fun printActivityList(activity: Activity, items: List<ActivityItem>) {
     val html = buildString {
         append(
@@ -189,15 +191,4 @@ private fun printActivityList(activity: Activity, items: List<ActivityItem>) {
         }
     }
     webView.loadDataWithBaseURL(null, html, "text/html", "UTF-8", null)
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun ActivityListScreenPreview() {
-    NursingAppTheme {
-        ActivityListScreen(
-            modifier = Modifier.fillMaxSize(),
-            onNavigateToAddActivity = { /* Do nothing in preview */ }
-        )
-    }
 }
