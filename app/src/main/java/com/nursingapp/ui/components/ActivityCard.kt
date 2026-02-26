@@ -39,11 +39,9 @@ fun ActivityCard(
     val context = LocalContext.current
     var isExpanded by rememberSaveable(item.id) { mutableStateOf(false) }
 
-    // --- NEW: Date Picker State ---
     var showDatePicker by remember { mutableStateOf(false) }
     val datePickerState = rememberDatePickerState()
 
-    // --- NEW: Date Picker Dialog ---
     if (showDatePicker) {
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
@@ -52,7 +50,6 @@ fun ActivityCard(
                     datePickerState.selectedDateMillis?.let { millis ->
                         val dateString = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
                             .format(Date(millis))
-                        // Calls the repository function we discussed
                         ActivityRepository.scheduleActivity(context, item, dateString)
                     }
                     showDatePicker = false
@@ -184,18 +181,36 @@ fun ActivityCard(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.AccessTime, "Duration", Modifier.size(16.dp), MaterialTheme.colorScheme.primary)
+                    Icon(
+                        Icons.Default.AccessTime,
+                        "Duration",
+                        Modifier.size(16.dp),
+                        MaterialTheme.colorScheme.primary
+                    )
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(item.duration, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        item.duration,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.DirectionsRun, "Mobility", Modifier.size(16.dp), MaterialTheme.colorScheme.primary)
+                    Icon(
+                        Icons.Default.DirectionsRun,
+                        "Mobility",
+                        Modifier.size(16.dp),
+                        MaterialTheme.colorScheme.primary
+                    )
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("${item.mobilityRequired.emoji} ${item.mobilityRequired.displayName}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        "${item.mobilityRequired.emoji} ${item.mobilityRequired.displayName}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
-
+            
             // Expandable section
             AnimatedVisibility(
                 visible = isExpanded,
@@ -207,20 +222,56 @@ fun ActivityCard(
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    Text(item.description, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    // 1. Description
+                    Text(
+                        item.description,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
 
-                    Spacer(modifier = Modifier.height(12.dp))
-
+                    // 2. Supplies Section
+                    Spacer(modifier = Modifier.height(16.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Inventory2, "Supplies", Modifier.size(16.dp), MaterialTheme.colorScheme.secondary)
+                        Icon(Icons.Default.Inventory2, null, Modifier.size(16.dp), MaterialTheme.colorScheme.secondary)
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Supplies needed", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.secondary, fontWeight = FontWeight.SemiBold)
+                        Text("Supplies Needed", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.secondary, fontWeight = FontWeight.Bold)
+                    }
+                    Spacer(modifier = Modifier.height(6.dp))
+                    item.supplies.forEach { supply ->
+                        Text("• $supply", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(start = 8.dp, bottom = 2.dp))
                     }
 
+                    // 3. Instructions Section
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.MenuBook, null, Modifier.size(16.dp), MaterialTheme.colorScheme.primary)
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("How to Run This Activity", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                    }
                     Spacer(modifier = Modifier.height(6.dp))
+                    item.instructions.forEachIndexed { index, step ->
+                        Text("${index + 1}. $step", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp))
+                    }
 
-                    item.supplies.forEach { supply ->
-                        Text("• $supply", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(start = 8.dp, bottom = 2.dp))
+                    // 4. Benefits Section
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.VolunteerActivism, null, Modifier.size(16.dp), MaterialTheme.colorScheme.tertiary)
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Why This Helps", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.tertiary, fontWeight = FontWeight.Bold)
+                    }
+
+                    FlowRow(
+                        modifier = Modifier.padding(start = 8.dp, top = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        item.benefits.forEach { benefit ->
+                            SuggestionChip(
+                                onClick = { /* Info only */ },
+                                label = { Text(benefit, style = MaterialTheme.typography.labelSmall) },
+                                modifier = Modifier.height(32.dp)
+                            )
+                        }
                     }
                 }
             }

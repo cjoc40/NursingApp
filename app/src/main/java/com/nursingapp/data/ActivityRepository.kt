@@ -36,6 +36,8 @@ object ActivityRepository {
         mobility: MobilityLevel,
         category: ActivityCategory,
         supplies: List<String>,
+        instructions: List<String>,
+        benefits: List<String>,
         date: String? = null
     ) {
         val newItem = ActivityItem(
@@ -47,7 +49,9 @@ object ActivityRepository {
             supplies = supplies,
             category = category,
             isCustom = true,
-            scheduledDate = date
+            scheduledDate = date,
+            instructions = instructions,
+            benefits =benefits
         )
         customActivities.add(newItem)
         save(context)

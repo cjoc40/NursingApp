@@ -122,7 +122,7 @@ val allQuizItems: List<QuizItem> = listOf(
     ),
     QuizItem(
         id = 16,
-        question = "What was the first animated feature film?",
+        question = "What was the first cel-animated feature film?",
         answer = "Snow White and the Seven Dwarfs (1937)",
         category = QuizCategory.TRIVIA,
     ),
