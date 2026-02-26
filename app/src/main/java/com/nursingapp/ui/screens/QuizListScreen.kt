@@ -28,7 +28,7 @@ import com.nursingapp.data.SongRepository
 import com.nursingapp.ui.components.QuizCard
 import kotlinx.coroutines.launch
 import java.util.Date
-
+import androidx.compose.material.icons.filled.Settings
 private enum class QuizFilter(val label: String) {
     TRIVIA("Trivia"),
     GUESS_THE_SONG("Guess the Song"),
@@ -41,6 +41,11 @@ fun QuizListScreen(modifier: Modifier = Modifier, onNavigateToAddSong: () -> Uni
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
+    // 1. API Filter States
+    var showApiSettings by remember { mutableStateOf(false) }
+    var apiDifficulty by rememberSaveable { mutableStateOf("medium") }
+    var apiCategoryId by rememberSaveable { mutableStateOf<Int?>(null) }
+
     val combinedItems = allQuizItems + SongRepository.songs
     val filteredItems = when (selectedFilter) {
         QuizFilter.TRIVIA -> combinedItems.filter { it.category == QuizCategory.TRIVIA }
@@ -50,19 +55,25 @@ fun QuizListScreen(modifier: Modifier = Modifier, onNavigateToAddSong: () -> Uni
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {
-                    Text(
-                        text = "Quizzes",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
-                    )
-                },
+                title = { Text("Quizzes", fontWeight = FontWeight.Bold) },
                 actions = {
                     IconButton(onClick = { printQuizList(context as Activity, filteredItems) }) {
-                        Icon(imageVector = Icons.Default.Print, contentDescription = "Print")
+                        Icon(Icons.Default.Print, contentDescription = "Print")
                     }
+
+                    // 2. Open API Settings
+                    IconButton(onClick = { showApiSettings = true }) {
+                        Icon(
+                            imageVector = Icons.Default.Settings, // Much cleaner!
+                            contentDescription = "API Settings"
+                        )
+                    }
+
                     IconButton(onClick = {
-                        scope.launch { SongRepository.fetchNewTrivia(context) }
+                        scope.launch {
+                            // 3. Pass filters to fetch
+                            SongRepository.fetchNewTrivia(context, apiCategoryId, apiDifficulty)
+                        }
                     }) {
                         Icon(imageVector = Icons.Default.Refresh, contentDescription = "Get New Trivia")
                     }
@@ -70,7 +81,6 @@ fun QuizListScreen(modifier: Modifier = Modifier, onNavigateToAddSong: () -> Uni
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    actionIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                 ),
             )
         },
@@ -92,9 +102,7 @@ fun QuizListScreen(modifier: Modifier = Modifier, onNavigateToAddSong: () -> Uni
         ) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(
-                    bottom = innerPadding.calculateBottomPadding() + 16.dp
-                ),
+                contentPadding = PaddingValues(bottom = innerPadding.calculateBottomPadding() + 16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 item { Spacer(modifier = Modifier.height(70.dp)) }
@@ -134,9 +142,60 @@ fun QuizListScreen(modifier: Modifier = Modifier, onNavigateToAddSong: () -> Uni
                 }
             }
         }
+
+        // 4. API Settings Bottom Sheet
+        if (showApiSettings) {
+            ModalBottomSheet(
+                onDismissRequest = { showApiSettings = false },
+                sheetState = rememberModalBottomSheetState()
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 16.dp, end = 16.dp, bottom = 40.dp)
+                ) {
+                    Text("API Retrieval Options", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.height(16.dp))
+
+                    Text("Difficulty", style = MaterialTheme.typography.titleMedium)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        listOf("easy", "medium", "hard").forEach { level ->
+                            FilterChip(
+                                selected = apiDifficulty == level,
+                                onClick = { apiDifficulty = level },
+                                label = { Text(level.replaceFirstChar { it.uppercase() }) }
+                            )
+                        }
+                    }
+
+                    Spacer(Modifier.height(16.dp))
+
+                    Text("Category", style = MaterialTheme.typography.titleMedium)
+                    // A quick way to handle categories
+                    val categories = listOf("Any" to null, "General" to 9, "History" to 23, "Geography" to 22, "Music" to 12)
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(categories) { (name, id) ->
+                            FilterChip(
+                                selected = apiCategoryId == id,
+                                onClick = { apiCategoryId = id },
+                                label = { Text(name) }
+                            )
+                        }
+                    }
+
+                    Spacer(Modifier.height(24.dp))
+
+                    Button(
+                        onClick = { showApiSettings = false },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Close")
+                    }
+                }
+            }
+        }
     }
 }
-
 private fun printQuizList(activity: Activity, items: List<QuizItem>) {
     val html = buildString {
         append(

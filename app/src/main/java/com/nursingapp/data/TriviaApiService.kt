@@ -7,9 +7,10 @@ data class TriviaResponse(val results: List<TriviaResult>)
 
 interface TriviaApiService {
     @GET("api.php")
-    suspend fun getTrivia(
-        @Query("amount") amount: Int,
-        // Removing the 'type' query entirely allows for a mix of everything
+    suspend fun getQuestions(
+        @Query("amount") amount: Int = 5,
+        @Query("category") category: Int? = null,
+        @Query("difficulty") difficulty: String? = null
     ): TriviaResponse
 }
 

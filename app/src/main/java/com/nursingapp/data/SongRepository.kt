@@ -39,18 +39,24 @@ object SongRepository {
         }
     }
 
-    suspend fun fetchNewTrivia(context: Context) {
+    suspend fun fetchNewTrivia(
+        context: Context,
+        categoryId: Int? = null,
+        difficulty: String? = null
+    ) {
         try {
-            // Amount is set to 5, type is omitted to get a mix of Boolean and Multiple Choice
-            val response = api.getTrivia(amount = 5)
+            // Use the parameters categoryId and difficulty here
+            val response = api.getQuestions(
+                amount = 5,
+                category = categoryId,
+                difficulty = difficulty
+            )
 
             val newItems = response.results.map { result ->
                 val decodedQuestion = Html.fromHtml(result.question, Html.FROM_HTML_MODE_LEGACY).toString()
                 val decodedAnswer = Html.fromHtml(result.correct_answer, Html.FROM_HTML_MODE_LEGACY).toString()
 
-                // Logic for "Open-Ended" vs "Multiple Choice" support
                 val hintText = if (result.type == "multiple") {
-                    // Combine correct and incorrect options for the nurse/staff
                     val options = (result.incorrect_answers + result.correct_answer)
                         .map { Html.fromHtml(it, Html.FROM_HTML_MODE_LEGACY).toString() }
                         .shuffled()
