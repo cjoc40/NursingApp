@@ -3,8 +3,10 @@ package com.nursingapp.ui.navigation
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.SelfImprovement
+import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.EmojiEvents
 import androidx.compose.material.icons.outlined.SelfImprovement
 import androidx.compose.material3.Icon
@@ -22,9 +24,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.nursingapp.ui.screens.ActivityCalendarScreen
 import com.nursingapp.ui.screens.ActivityListScreen
 import com.nursingapp.ui.screens.AddActivityScreen
 import com.nursingapp.ui.screens.AddSongScreen
+import com.nursingapp.ui.screens.CalendarScreen
 import com.nursingapp.ui.screens.QuizListScreen
 
 /** Sealed class describing each top-level navigation destination. */
@@ -59,14 +63,20 @@ sealed class AppDestination(
         selectedIcon = Icons.Filled.SelfImprovement,
         unselectedIcon = Icons.Outlined.SelfImprovement
     )
+    data object Calendar : AppDestination(
+        route = "calendar",
+        label = "Calendar",
+        selectedIcon = Icons.Filled.CalendarMonth,
+        unselectedIcon = Icons.Outlined.CalendarMonth,
+    )
 }
 
-private val topLevelDestinations = listOf(AppDestination.Quizzes, AppDestination.Activities)
+private val topLevelDestinations = listOf(
+    AppDestination.Quizzes,
+    AppDestination.Activities,
+    AppDestination.Calendar
+)
 
-/**
- * Root composable that owns the [NavHost] and bottom navigation bar.
- * Uses [androidx.navigation.compose] for type-safe, back-stack-aware navigation.
- */
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
@@ -85,7 +95,6 @@ fun AppNavigation() {
                         selected = selected,
                         onClick = {
                             navController.navigate(destination.route) {
-                                // Pop up to the start destination to avoid large back stacks
                                 popUpTo(navController.graph.findStartDestination().id) {
                                     saveState = true
                                 }
@@ -108,7 +117,6 @@ fun AppNavigation() {
         NavHost(
             navController = navController,
             startDestination = AppDestination.Quizzes.route,
-            // Applying padding here ensures all screens respect the bottom bar space
             modifier = Modifier.padding(innerPadding)
         ) {
             // 1. Main Quiz List Screen
@@ -119,7 +127,6 @@ fun AppNavigation() {
                     }
                 )
             }
-
             // 2. Activities Screen
             composable(AppDestination.Activities.route) {
                 ActivityListScreen(
@@ -129,7 +136,6 @@ fun AppNavigation() {
                     }
                 )
             }
-
             // 3. Add Song Screen
             composable(AppDestination.AddSong.route) {
                 AddSongScreen(
@@ -143,6 +149,16 @@ fun AppNavigation() {
                     onActivityAdded = {
                         navController.popBackStack()
                     }
+                )
+            }
+            composable(AppDestination.Calendar.route) {
+                CalendarScreen(modifier = Modifier.fillMaxSize())
+            }
+            composable("schedule_picker/{activityId}") { backStackEntry ->
+                val id = backStackEntry.arguments?.getString("activityId")?.toIntOrNull() ?: 0
+                ActivityCalendarScreen(
+                    activityId = id,
+                    onScheduleConfirmed = { navController.popBackStack() }
                 )
             }
         }

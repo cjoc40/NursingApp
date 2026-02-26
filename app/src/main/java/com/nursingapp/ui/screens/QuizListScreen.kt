@@ -140,11 +140,16 @@ fun QuizListScreen(modifier: Modifier = Modifier, onNavigateToAddSong: () -> Uni
         modifier = modifier,
     ) { innerPadding ->
         LazyColumn(
-            contentPadding = PaddingValues(16.dp),
+            contentPadding = PaddingValues(
+                start = 16.dp,
+                top = 16.dp,
+                end = 16.dp,
+                bottom = innerPadding.calculateBottomPadding() + 16.dp // Adds Navbar height + extra gap
+            ),
             verticalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding),
+                .padding(top = innerPadding.calculateTopPadding()),
         ) {
             // Category Filter Chips
             item {

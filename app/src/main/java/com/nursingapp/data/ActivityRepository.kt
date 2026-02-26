@@ -13,14 +13,18 @@ object ActivityRepository {
     val customActivities = mutableStateListOf<ActivityItem>()
 
     fun initialize(context: Context) {
-        if (customActivities.isNotEmpty()) return
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val json = prefs.getString(ACTIVITIES_KEY, null)
 
         if (json != null) {
             val type = object : TypeToken<List<ActivityItem>>() {}.type
             val saved: List<ActivityItem> = gson.fromJson(json, type)
+            customActivities.clear()
             customActivities.addAll(saved)
+        } else {
+            // If first time opening the app, load the built-in ones into the mutable state
+            customActivities.addAll(allActivityItems)
+            save(context)
         }
     }
 
@@ -57,6 +61,15 @@ object ActivityRepository {
         if (index != -1) {
             customActivities[index] = customActivities[index].copy(scheduledDate = date)
             save(context)
+        }
+    }
+    fun unscheduleActivity(context: Context, item: ActivityItem) {
+        // 1. Check custom activities
+        val customIndex = customActivities.indexOfFirst { it.id == item.id }
+        if (customIndex != -1) {
+            customActivities[customIndex] = customActivities[customIndex].copy(scheduledDate = null)
+            save(context)
+            return
         }
     }
     private fun save(context: Context) {

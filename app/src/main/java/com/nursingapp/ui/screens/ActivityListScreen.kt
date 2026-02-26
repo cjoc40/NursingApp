@@ -68,16 +68,6 @@ fun ActivityListScreen(
                     )
                 },
                 actions = {
-                    // NEW: Refresh Button to fetch from "API"
-                    IconButton(onClick = {
-                        scope.launch {
-                            // You can implement fetchNewActivity in ActivityRepository
-                            // ActivityRepository.fetchNewActivity(context)
-                        }
-                    }) {
-                        Icon(imageVector = Icons.Default.Refresh, contentDescription = "Refresh Activities")
-                    }
-
                     IconButton(onClick = { printActivityList(context as Activity, filteredItems) }) {
                         Icon(imageVector = Icons.Default.Print, contentDescription = "Print")
                     }
@@ -101,11 +91,16 @@ fun ActivityListScreen(
         modifier = modifier,
     ) { innerPadding ->
         LazyColumn(
-            contentPadding = PaddingValues(16.dp),
+            contentPadding = PaddingValues(
+                start = 16.dp,
+                top = 16.dp,
+                end = 16.dp,
+                bottom = innerPadding.calculateBottomPadding() + 16.dp // Adds Navbar height + extra gap
+            ),
             verticalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding),
+                .padding(top = innerPadding.calculateTopPadding()),
         ) {
             item {
                 LazyRow(

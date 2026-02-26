@@ -1,19 +1,11 @@
 package com.nursingapp.ui.screens
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.rememberDatePickerState
-import androidx.compose.runtime.Composable
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -21,60 +13,126 @@ import androidx.compose.ui.unit.dp
 import com.nursingapp.data.ActivityRepository
 import com.nursingapp.data.HolidayRepository
 import com.nursingapp.data.allActivityItems
-import com.nursingapp.ui.components.ActivityCard
 import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ActivityCalendarScreen() {
-    val datePickerState = rememberDatePickerState()
+fun ActivityCalendarScreen(
+    activityId: Int, // Received from navigation
+    onScheduleConfirmed: () -> Unit
+) {
     val context = LocalContext.current
+    val datePickerState = rememberDatePickerState()
 
-    // Get all activities that have a date assigned
-    val scheduledActivities = (allActivityItems + ActivityRepository.customActivities)
-        .filter { it.scheduledDate != null }
+    // Find the specific activity the user is trying to schedule
+    val activityToSchedule = remember(activityId) {
+        (allActivityItems + ActivityRepository.customActivities).find { it.id == activityId }
+    }
+    val selectedMillis = datePickerState.selectedDateMillis
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        DatePicker(
-            state = datePickerState,
-            showModeToggle = false,
-            title = { Text("Activity Schedule", modifier = Modifier.padding(16.dp)) }
-        )
-
-        val selectedMillis = datePickerState.selectedDateMillis
-        if (selectedMillis != null) {
-            val dateFormatted = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(
-                Date(
-                    selectedMillis
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Schedule Activity") },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
                 )
             )
-            val monthDayFormatted = SimpleDateFormat("MM-dd", Locale.getDefault()).format(Date(selectedMillis))
-
-            val holiday = HolidayRepository.getHolidayForDate(monthDayFormatted)
-            val activitiesForDay = scheduledActivities.filter { it.scheduledDate == dateFormatted }
-
-            LazyColumn(modifier = Modifier.padding(16.dp)) {
-                // Show Special Day / Holiday First
-                if (holiday != null) {
-                    item {
-                        Card(
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer),
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
-                        ) {
-                            Text("🌟 Special Day: ${holiday.name}", modifier = Modifier.padding(16.dp), fontWeight = FontWeight.Bold)
-                        }
+        }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+        ) {
+            if (activityToSchedule == null) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("Activity not found.")
+                }
+            } else {
+                // 1. Header showing what we are scheduling
+                Card(
+                    modifier = Modifier.padding(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "Scheduling: ${activityToSchedule.name}",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = activityToSchedule.category.displayName,
+                            style = MaterialTheme.typography.bodySmall
+                        )
                     }
                 }
 
-                // Show scheduled activities
-                items(activitiesForDay) { activity ->
-                    ActivityCard(item = activity, onDeleteClick = {})
-                }
+                // 2. The Calendar View
+                DatePicker(
+                    state = datePickerState,
+                    showModeToggle = false,
+                    modifier = Modifier.weight(1f) // Takes up available space
+                )
 
-                if (holiday == null && activitiesForDay.isEmpty()) {
-                    item { Text("No activities scheduled for this day.", style = MaterialTheme.typography.bodyMedium) }
+                // 3. Selection & Confirmation
+                Surface(
+                    tonalElevation = 8.dp,
+                    shadowElevation = 8.dp,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(24.dp)) {
+                        if (selectedMillis != null) {
+                            // FIX: Force UTC to prevent the date from shifting to the previous day
+                            val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).apply {
+                                timeZone = TimeZone.getTimeZone("UTC")
+                            }
+                            val dateString = sdf.format(Date(selectedMillis))
+
+                            // Check for holiday
+                            val monthDaySdf = SimpleDateFormat("MM-dd", Locale.getDefault()).apply {
+                                timeZone = TimeZone.getTimeZone("UTC")
+                            }
+                            val holiday = HolidayRepository.getHolidayForDate(monthDaySdf.format(Date(selectedMillis)))
+
+                            if (holiday != null) {
+                                Text(
+                                    "🌟 Note: This is ${holiday.name}",
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = MaterialTheme.colorScheme.tertiary,
+                                    modifier = Modifier.padding(bottom = 8.dp)
+                                )
+                            }
+
+                            Text(
+                                "Target Date: $dateString",
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Bold
+                            )
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            Button(
+                                onClick = {
+                                    // SAVE to Repository
+                                    ActivityRepository.scheduleActivity(context, activityToSchedule, dateString)
+                                    onScheduleConfirmed() // Go back to list
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Icon(Icons.Default.Check, contentDescription = null)
+                                Spacer(Modifier.width(8.dp))
+                                Text("Confirm Selection")
+                            }
+                        } else {
+                            Text(
+                                "Please tap a date above to schedule this activity.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
                 }
             }
         }
