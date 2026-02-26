@@ -31,7 +31,8 @@ object ActivityRepository {
         duration: String,
         mobility: MobilityLevel,
         category: ActivityCategory,
-        supplies: List<String>
+        supplies: List<String>,
+        date: String? = null
     ) {
         val newItem = ActivityItem(
             id = (System.currentTimeMillis() % Int.MAX_VALUE).toInt(),
@@ -41,7 +42,8 @@ object ActivityRepository {
             mobilityRequired = mobility,
             supplies = supplies,
             category = category,
-            isCustom = true
+            isCustom = true,
+            scheduledDate = date
         )
         customActivities.add(newItem)
         save(context)
@@ -50,7 +52,13 @@ object ActivityRepository {
         customActivities.remove(item)
         save(context)
     }
-
+    fun scheduleActivity(context: Context, item: ActivityItem, date: String) {
+        val index = customActivities.indexOfFirst { it.id == item.id }
+        if (index != -1) {
+            customActivities[index] = customActivities[index].copy(scheduledDate = date)
+            save(context)
+        }
+    }
     private fun save(context: Context) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val json = gson.toJson(customActivities.toList())

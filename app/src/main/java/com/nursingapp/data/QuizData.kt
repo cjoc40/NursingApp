@@ -17,7 +17,7 @@ data class QuizItem(
     val answer: String,
     val hint: String = "",
     val category: QuizCategory,
-    val spotifyUri: String? = null,
+    val youtubeId: String? = null,
     val isCustom: Boolean = false // NEW
 )
 
@@ -158,104 +158,104 @@ val allQuizItems: List<QuizItem> = listOf(
         question = "You ain't nothing but a hound dog",
         answer = "Hound Dog – Elvis Presley (1956)",
         category = QuizCategory.GUESS_THE_SONG,
-        spotifyUri = "spotify:track:64Ny7djQ6rNJspquof2KoX"
+        youtubeId = "-eHJ12Vhpyc"
     ),
     QuizItem(
         id = 22,
         question = "♪ \"Somewhere over the rainbow, way up high…\"",
         answer = "Over the Rainbow – Judy Garland (1939)",
         category = QuizCategory.GUESS_THE_SONG,
-        spotifyUri = "spotify:track:568SEFtDjKr7N2PytpA6D5"
+        youtubeId = "PSZxmZmBfnU"
     ),
     QuizItem(
         id = 23,
         question = "♪ \"You are my sunshine, my only sunshine…\"",
         answer = "You Are My Sunshine – Jimmie Davis (1940)",
         category = QuizCategory.GUESS_THE_SONG,
-        spotifyUri = "spotify:track:1xocn49HEZyRcWVJap4j8K"
+        youtubeId = "ckKeQNCyPBU"
     ),
     QuizItem(
         id = 24,
         question = "♪ \"When the moon hits your eye like a big pizza pie, that's amore…\"",
         answer = "That's Amore – Dean Martin (1953)",
         category = QuizCategory.GUESS_THE_SONG,
-        spotifyUri = "spotify:track:3x6wVKXfCm85Pw7gYo0rqq"
+        youtubeId = "RUz1pZ_LujU"
     ),
     QuizItem(
         id = 25,
         question = "♪ \"What a wonderful world…\"",
         answer = "What a Wonderful World – Louis Armstrong (1967)",
         category = QuizCategory.GUESS_THE_SONG,
-        spotifyUri = "spotify:track:29U7stRjqHU6rMiS8BfaI9"
+        youtubeId = "rBrd_3VMC3c"
     ),
     QuizItem(
         id = 26,
         question = "♪ \"Fly me to the moon, let me play among the stars…\"",
         answer = "Fly Me to the Moon – Frank Sinatra (1964)",
         category = QuizCategory.GUESS_THE_SONG,
-        spotifyUri = "spotify:track:1PVTvvxpSkyJWemW1CwVVk"
+        youtubeId = "JYuyWrkwpok"
     ),
     QuizItem(
         id = 27,
         question = "♪ \"My girl, talkin' 'bout my girl…\"",
         answer = "My Girl – The Temptations (1964)",
         category = QuizCategory.GUESS_THE_SONG,
-        spotifyUri = "spotify:track:745H5CctFr12Mo7cqa1BMH"
+        youtubeId = "y3KJ7d2qBoA"
     ),
     QuizItem(
         id = 28,
         question = "♪ \"Oh Danny Boy, the pipes, the pipes are calling…\"",
         answer = "Danny Boy (traditional Irish ballad)",
         category = QuizCategory.GUESS_THE_SONG,
-        spotifyUri = "spotify:track:2EQao9c4fbTVdwmkUDPRYS"
+        youtubeId = "6ppdB6JX99Q"
     ),
     QuizItem(
         id = 29,
         question = "♪ \"Rock around the clock tonight, rock around the clock…\"",
         answer = "Rock Around the Clock – Bill Haley & His Comets (1954)",
         category = QuizCategory.GUESS_THE_SONG,
-        spotifyUri = "spotify:track:34AmZ4PMz9iNZVp9AMIGZj"
+        youtubeId = "ZgdufzXvjqw"
     ),
     QuizItem(
         id = 30,
         question = "♪ \"Take me out to the ball game, take me out with the crowd…\"",
         answer = "Take Me Out to the Ball Game (1908 – traditional)",
         category = QuizCategory.GUESS_THE_SONG,
-        spotifyUri = "spotify:track:4o0k0mY8nrOrVz88thqP7R"
+        youtubeId = "q4-gsdLSSQ0"
     ),
     QuizItem(
         id = 31,
         question = "♪ \"This land is your land, this land is my land…\"",
         answer = "This Land Is Your Land – Woody Guthrie (1944)",
         category = QuizCategory.GUESS_THE_SONG,
-        spotifyUri = "spotify:track:2vC2y2TI0Iq4QbN4zjNAth"
+        youtubeId = "spotify:track:2vC2y2TI0Iq4QbN4zjNAth"
     ),
     QuizItem(
         id = 32,
         question = "♪ \"I've been working on the railroad, all the live-long day…\"",
         answer = "I've Been Working on the Railroad (traditional American folk song)",
         category = QuizCategory.GUESS_THE_SONG,
-        spotifyUri = "spotify:track:4IZaDLQPZdxY5aate93yEd"
+        youtubeId = "wxiMrvDbq3s"
     ),
     QuizItem(
         id = 33,
         question = "♪ \"Oh, give me a home where the buffalo roam…\"",
         answer = "Home on the Range (Kansas state song, 1872)",
         category = QuizCategory.GUESS_THE_SONG,
-        spotifyUri = "spotify:track:1Hr94ZADw5cfltOCueNNPK"
+        youtubeId = "172fB4CEQ3Q"
     ),
     QuizItem(
         id = 34,
         question = "♪ \"You make me feel so young, you make me feel like spring has sprung…\"",
         answer = "You Make Me Feel So Young – Frank Sinatra (1956)",
         category = QuizCategory.GUESS_THE_SONG,
-        spotifyUri = "spotify:track:2QTPd4DypZ1h5YcDJSUVlS"
+        youtubeId = "TZNIKZdoehE"
     ),
     QuizItem(
         id = 35,
         question = "♪ \"Edelweiss, edelweiss, every morning you greet me…\"",
         answer = "Edelweiss – from The Sound of Music (1959)",
         category = QuizCategory.GUESS_THE_SONG,
-        spotifyUri = "spotify:track:2ZBMFQ0dkVgge3HbUUAD6g"
+        youtubeId = "8bL2BCiFkTk"
     ),
 )

@@ -10,24 +10,14 @@ import androidx.compose.ui.unit.dp
 import com.nursingapp.data.SongRepository
 
 @Composable
-fun AddSongScreen(
-    onSongAdded: () -> Unit
-) {
+fun AddSongScreen(onSongAdded: () -> Unit) {
     var title by remember { mutableStateOf("") }
     var artist by remember { mutableStateOf("") }
-    var spotifyLink by remember { mutableStateOf("") }
+    var youtubeLink by remember { mutableStateOf("") }
     val context = LocalContext.current
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-
-        Text(
-            text = "Add Custom Song",
-            style = MaterialTheme.typography.headlineSmall
-        )
+    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+        Text("Add Custom Song Quiz", style = MaterialTheme.typography.headlineSmall)
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -38,40 +28,31 @@ fun AddSongScreen(
             modifier = Modifier.fillMaxWidth()
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
-
         OutlinedTextField(
             value = artist,
             onValueChange = { artist = it },
-            label = { Text("Artist") },
+            label = { Text("Artist Name") },
             modifier = Modifier.fillMaxWidth()
         )
-
-        Spacer(modifier = Modifier.height(8.dp))
 
         OutlinedTextField(
-            value = spotifyLink,
-            onValueChange = { spotifyLink = it },
-            label = { Text("Spotify Track Link") },
+            value = youtubeLink,
+            onValueChange = { youtubeLink = it },
+            label = { Text("YouTube Link") },
+            placeholder = { Text("https://www.youtube.com/watch?v=...") },
             modifier = Modifier.fillMaxWidth()
         )
-
-        Spacer(modifier = Modifier.height(24.dp))
 
         Button(
             onClick = {
-                val isLinkValid = spotifyLink.isNotBlank()
-
-                if (title.isNotBlank() && artist.isNotBlank() && isLinkValid) {
-                    SongRepository.addSong(context, title, artist, spotifyLink)
+                if (title.isNotBlank() && youtubeLink.isNotBlank()) {
+                    SongRepository.addSong(context, title, artist, youtubeLink)
                     onSongAdded()
-                } else {
-                    Toast.makeText(context, "Please enter a Title, Artist, and Link/ID", Toast.LENGTH_SHORT).show()
                 }
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.padding(top = 16.dp).fillMaxWidth()
         ) {
-            Text("Add Song")
+            Text("Save to Quiz List")
         }
     }
 }

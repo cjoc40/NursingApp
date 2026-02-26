@@ -7,63 +7,64 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccessTime
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.DirectionsRun
-import androidx.compose.material.icons.filled.ExpandLess
-import androidx.compose.material.icons.filled.ExpandMore
-import androidx.compose.material.icons.filled.Inventory2
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.nursingapp.data.ActivityCategory
 import com.nursingapp.data.ActivityItem
+import com.nursingapp.data.ActivityRepository
 import com.nursingapp.data.MobilityLevel
 import com.nursingapp.ui.theme.NursingAppTheme
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
-/**
- * A card that displays activity details for nursing-home residents.
- *
- * The card always shows the activity name, category badge, duration, and mobility level.
- * Tapping the card expands it to reveal the full description and supplies list.
- */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ActivityCard(
     item: ActivityItem,
     modifier: Modifier = Modifier,
-    onDeleteClick: (ActivityItem) -> Unit // 1. Add this parameter
+    onDeleteClick: (ActivityItem) -> Unit
 ) {
+    val context = LocalContext.current
     var isExpanded by rememberSaveable(item.id) { mutableStateOf(false) }
+
+    // --- NEW: Date Picker State ---
+    var showDatePicker by remember { mutableStateOf(false) }
+    val datePickerState = rememberDatePickerState()
+
+    // --- NEW: Date Picker Dialog ---
+    if (showDatePicker) {
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let { millis ->
+                        val dateString = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                            .format(Date(millis))
+                        // Calls the repository function we discussed
+                        ActivityRepository.scheduleActivity(context, item, dateString)
+                    }
+                    showDatePicker = false
+                }) { Text("Schedule") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) { Text("Cancel") }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
 
     val categoryColor = when (item.category) {
         ActivityCategory.ART_CRAFTS -> MaterialTheme.colorScheme.secondaryContainer
@@ -89,7 +90,7 @@ fun ActivityCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            // Top row: category badge + (Delete Icon if custom) + expand icon
+            // Top row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -108,11 +109,18 @@ fun ActivityCard(
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    // 2. Add Delete Button for custom items
+                    // --- NEW: Schedule Button ---
+                    IconButton(onClick = { showDatePicker = true }) {
+                        Icon(
+                            imageVector = Icons.Default.CalendarMonth,
+                            contentDescription = "Schedule activity",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+
                     if (item.isCustom) {
-                        IconButton(
-                            onClick = { onDeleteClick(item) }
-                        ) {
+                        IconButton(onClick = { onDeleteClick(item) }) {
                             Icon(
                                 imageVector = Icons.Default.Delete,
                                 contentDescription = "Delete activity",
@@ -140,116 +148,82 @@ fun ActivityCard(
                 fontWeight = FontWeight.SemiBold,
             )
 
-            Spacer(modifier = Modifier.height(10.dp))
+            // --- NEW: Scheduled Date Badge ---
+            item.scheduledDate?.let { date ->
+                Surface(
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.padding(vertical = 8.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Event,
+                            contentDescription = null,
+                            modifier = Modifier.size(14.dp),
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "Scheduled: $date",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(6.dp))
 
             // Duration & Mobility meta row
             Row(
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                // Duration
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.AccessTime,
-                        contentDescription = "Duration",
-                        modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.primary,
-                    )
+                    Icon(Icons.Default.AccessTime, "Duration", Modifier.size(16.dp), MaterialTheme.colorScheme.primary)
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = item.duration,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                    Text(item.duration, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
 
-                // Mobility
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.DirectionsRun,
-                        contentDescription = "Mobility level",
-                        modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.primary,
-                    )
+                    Icon(Icons.Default.DirectionsRun, "Mobility", Modifier.size(16.dp), MaterialTheme.colorScheme.primary)
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "${item.mobilityRequired.emoji} ${item.mobilityRequired.displayName}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                    Text("${item.mobilityRequired.emoji} ${item.mobilityRequired.displayName}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
 
-            // Expandable section: description + supplies
+            // Expandable section
             AnimatedVisibility(
                 visible = isExpanded,
-                enter = expandVertically(animationSpec = tween(250)) + fadeIn(animationSpec = tween(250)),
-                exit = shrinkVertically(animationSpec = tween(200)) + fadeOut(animationSpec = tween(200)),
+                enter = expandVertically(tween(250)) + fadeIn(tween(250)),
+                exit = shrinkVertically(tween(200)) + fadeOut(tween(200)),
             ) {
                 Column {
                     Spacer(modifier = Modifier.height(12.dp))
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Description
-                    Text(
-                        text = item.description,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                    Text(item.description, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Supplies
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.Inventory2,
-                            contentDescription = "Supplies needed",
-                            modifier = Modifier.size(16.dp),
-                            tint = MaterialTheme.colorScheme.secondary,
-                        )
+                        Icon(Icons.Default.Inventory2, "Supplies", Modifier.size(16.dp), MaterialTheme.colorScheme.secondary)
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = "Supplies needed",
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.secondary,
-                            fontWeight = FontWeight.SemiBold,
-                        )
+                        Text("Supplies needed", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.secondary, fontWeight = FontWeight.SemiBold)
                     }
 
                     Spacer(modifier = Modifier.height(6.dp))
 
                     item.supplies.forEach { supply ->
-                        Text(
-                            text = "• $supply",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.padding(start = 8.dp, bottom = 2.dp),
-                        )
+                        Text("• $supply", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(start = 8.dp, bottom = 2.dp))
                     }
                 }
             }
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun ActivityCardPreview() {
-    NursingAppTheme {
-        ActivityCard(
-            item = ActivityItem(
-                id = 1,
-                name = "Watercolor Painting",
-                description = "Details...",
-                duration = "45–60 min",
-                mobilityRequired = MobilityLevel.SEATED,
-                supplies = listOf("Paints"),
-                category = ActivityCategory.ART_CRAFTS,
-                isCustom = true // Test with custom true to see delete icon
-            ),
-            modifier = Modifier.padding(16.dp),
-            onDeleteClick = {} // Add empty lambda for preview
-        )
     }
 }

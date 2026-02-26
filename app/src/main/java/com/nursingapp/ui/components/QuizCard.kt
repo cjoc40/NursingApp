@@ -17,10 +17,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -36,6 +39,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -48,11 +52,8 @@ import androidx.compose.ui.unit.dp
 import com.nursingapp.data.QuizCategory
 import com.nursingapp.data.QuizItem
 import com.nursingapp.ui.theme.NursingAppTheme
+import androidx.core.net.toUri
 
-/**
- * A flashcard-style card that shows a quiz question and reveals the answer on tap.
- * Includes a delete button for custom user-added items.
- */
 @Composable
 fun QuizCard(
     item: QuizItem,
@@ -142,23 +143,37 @@ fun QuizCard(
                 )
             }
 
-            // Spotify Button
-            if (item.category == QuizCategory.GUESS_THE_SONG && item.spotifyUri != null) {
+            // YouTube Button
+            if (item.category == QuizCategory.GUESS_THE_SONG && item.youtubeId != null) {
                 Spacer(modifier = Modifier.height(12.dp))
                 Button(
                     onClick = {
-                        val intent = Intent(Intent.ACTION_VIEW).apply {
-                            data = Uri.parse(item.spotifyUri)
-                            setPackage("com.spotify.music") // Standard Spotify package ID
-                        }
+                        // "vnd.youtube:" is the specific URI prefix to open the YouTube App
+                        // Fallback is the standard web URL
+                        val appIntent = Intent(Intent.ACTION_VIEW,
+                            "vnd.youtube:${item.youtubeId}".toUri())
+                        val webIntent = Intent(Intent.ACTION_VIEW,
+                            "https://www.youtube.com/watch?v=${item.youtubeId}".toUri())
+
                         try {
-                            context.startActivity(intent)
+                            context.startActivity(appIntent)
                         } catch (e: Exception) {
-                            Toast.makeText(context, "Spotify app not installed", Toast.LENGTH_SHORT).show()
+                            // If the YouTube app isn't installed, open in the browser
+                            context.startActivity(webIntent)
                         }
-                    }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFFF0000), // YouTube Red
+                        contentColor = Color.White
+                    )
                 ) {
-                    Text("▶ Play on Spotify")
+                    Icon(
+                        imageVector = Icons.Default.PlayArrow,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Play on YouTube")
                 }
             }
 
@@ -222,7 +237,7 @@ private fun QuizCardTriviaPreview() {
                 category = QuizCategory.TRIVIA,
             ),
             modifier = Modifier.padding(16.dp),
-            onDeleteClick = {} // Added empty lambda to fix preview
+            onDeleteClick = {}
         )
     }
 }
@@ -237,10 +252,10 @@ private fun QuizCardSongPreview() {
                 question = "♪ \"You ain't nothin' but a hound dog, cryin' all the time…\"",
                 answer = "Hound Dog – Elvis Presley (1956)",
                 category = QuizCategory.GUESS_THE_SONG,
-                spotifyUri = "spotify:track:64Ny7djQ6rNJspquof2KoX"
+                youtubeId = "eHJ12Vhpyc"
             ),
             modifier = Modifier.padding(16.dp),
-            onDeleteClick = {} // Added empty lambda to fix preview
+            onDeleteClick = {}
         )
     }
 }

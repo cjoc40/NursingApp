@@ -12,8 +12,8 @@ object SongRepository {
     private const val PREFS_NAME = "quiz_prefs"
     private const val SONGS_KEY = "saved_songs"
     private val gson = Gson()
+    val songs = mutableStateListOf<QuizItem>()
 
-    // Lazily initialize Retrofit to save resources
     private val api: TriviaApiService by lazy {
         Retrofit.Builder()
             .baseUrl("https://opentdb.com/")
@@ -22,12 +22,7 @@ object SongRepository {
             .create(TriviaApiService::class.java)
     }
 
-    // State list for the UI - automatically updates the screen
-    val songs = mutableStateListOf<QuizItem>()
 
-    /**
-     * Loads saved songs/trivia from SharedPreferences on app start.
-     */
     fun initialize(context: Context) {
         if (songs.isNotEmpty()) return
 
@@ -44,9 +39,6 @@ object SongRepository {
         }
     }
 
-    /**
-     * Fetches a mix of trivia from the OpenTDB API.
-     */
     suspend fun fetchNewTrivia(context: Context) {
         try {
             // Amount is set to 5, type is omitted to get a mix of Boolean and Multiple Choice
@@ -85,26 +77,27 @@ object SongRepository {
         }
     }
 
-    /**
-     * Handles adding a custom Spotify track.
-     */
-    fun addSong(context: Context, title: String, artist: String, spotifyLink: String) {
-        val trackId = when {
-            spotifyLink.contains("spotify.com") -> {
-                spotifyLink.substringAfter("/track/").substringBefore("?")
+    fun addSong(context: Context, title: String, artist: String, youtubeLink: String) {
+        // Extract the 11-character ID from various YouTube URL formats
+        val videoId = when {
+            youtubeLink.contains("v=") -> {
+                youtubeLink.substringAfter("v=").substringBefore("&")
             }
-            spotifyLink.startsWith("spotify:track:") -> {
-                spotifyLink.substringAfterLast(":")
+            youtubeLink.contains("youtu.be/") -> {
+                youtubeLink.substringAfter("youtu.be/").substringBefore("?")
             }
-            else -> spotifyLink.trim()
+            youtubeLink.contains("shorts/") -> {
+                youtubeLink.substringAfter("shorts/").substringBefore("?")
+            }
+            else -> youtubeLink.trim()
         }
 
         val newSong = QuizItem(
             id = (System.currentTimeMillis() % Int.MAX_VALUE).toInt(),
-            question = "Custom song 🎵",
+            question = "Guess this song! 🎵",
             answer = "$title – $artist",
             category = QuizCategory.GUESS_THE_SONG,
-            spotifyUri = "spotify:track:$trackId",
+            youtubeId = videoId,
             isCustom = true
         )
 

@@ -1,16 +1,6 @@
 package com.nursingapp.data
 
-/**
- * Represents a single activity suggestion for nursing-home residents.
- *
- * @param id               Unique identifier.
- * @param name             Short display name.
- * @param description      Brief description of the activity.
- * @param duration         Typical time range (e.g. "30–45 min").
- * @param mobilityRequired Physical effort level required.
- * @param supplies         List of materials / items needed.
- * @param category         High-level category for filtering.
- */
+
 data class ActivityItem(
     val id: Int,
     val name: String,
@@ -19,9 +9,15 @@ data class ActivityItem(
     val mobilityRequired: MobilityLevel,
     val supplies: List<String>,
     val category: ActivityCategory,
-    val isCustom: Boolean = false
+    val isCustom: Boolean = false,
+    val scheduledDate: String? = null
 )
 
+data class SpecialDay(
+    val name: String,
+    val date: String, // Format "MM-dd"
+    val type: String
+)
 enum class MobilityLevel(val displayName: String, val emoji: String) {
     SEATED("Seated", "🪑"),
     LIGHT("Light Movement", "🚶"),
