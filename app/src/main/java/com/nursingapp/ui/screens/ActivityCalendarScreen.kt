@@ -11,7 +11,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.nursingapp.data.ActivityRepository
-import com.nursingapp.data.HolidayRepository
 import com.nursingapp.data.allActivityItems
 import java.text.SimpleDateFormat
 import java.util.*
@@ -35,6 +34,7 @@ fun ActivityCalendarScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Schedule Activity") },
+
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer
                 )
@@ -93,16 +93,6 @@ fun ActivityCalendarScreen(
                             // Check for holiday
                             val monthDaySdf = SimpleDateFormat("MM-dd", Locale.getDefault()).apply {
                                 timeZone = TimeZone.getTimeZone("UTC")
-                            }
-                            val holiday = HolidayRepository.getHolidayForDate(monthDaySdf.format(Date(selectedMillis)))
-
-                            if (holiday != null) {
-                                Text(
-                                    "🌟 Note: This is ${holiday.name}",
-                                    style = MaterialTheme.typography.labelLarge,
-                                    color = MaterialTheme.colorScheme.tertiary,
-                                    modifier = Modifier.padding(bottom = 8.dp)
-                                )
                             }
 
                             Text(

@@ -40,7 +40,11 @@ fun ActivityCard(
     var isExpanded by rememberSaveable(item.id) { mutableStateOf(false) }
 
     var showDatePicker by remember { mutableStateOf(false) }
+    var showTimePicker by remember { mutableStateOf(false) }
+    var tempSelectedDate by remember { mutableStateOf("") }
+
     val datePickerState = rememberDatePickerState()
+    val timePickerState = rememberTimePickerState(initialHour = 12, initialMinute = 0)
 
     if (showDatePicker) {
         DatePickerDialog(
@@ -48,12 +52,12 @@ fun ActivityCard(
             confirmButton = {
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let { millis ->
-                        val dateString = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                        tempSelectedDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
                             .format(Date(millis))
-                        ActivityRepository.scheduleActivity(context, item, dateString)
+                        showDatePicker = false
+                        showTimePicker = true // Move to Step 2
                     }
-                    showDatePicker = false
-                }) { Text("Schedule") }
+                }) { Text("Next") }
             },
             dismissButton = {
                 TextButton(onClick = { showDatePicker = false }) { Text("Cancel") }
@@ -61,6 +65,28 @@ fun ActivityCard(
         ) {
             DatePicker(state = datePickerState)
         }
+    }
+    if (showTimePicker) {
+        AlertDialog(
+            onDismissRequest = { showTimePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    val timeString = String.format("%02d:%02d", timePickerState.hour, timePickerState.minute)
+                    // Save to repository with both Date and Activity Time
+                    ActivityRepository.scheduleActivity(context, item, tempSelectedDate, timeString)
+                    showTimePicker = false
+                }) { Text("Schedule") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showTimePicker = false }) { Text("Back") }
+            },
+            title = { Text("Select Activity Time") },
+            text = {
+                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    TimePicker(state = timePickerState)
+                }
+            }
+        )
     }
 
     val categoryColor = when (item.category) {
@@ -106,7 +132,7 @@ fun ActivityCard(
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    // Schedule Button
+                    //Schedule Button
                     IconButton(onClick = { showDatePicker = true }) {
                         Icon(
                             imageVector = Icons.Default.CalendarMonth,
@@ -115,16 +141,13 @@ fun ActivityCard(
                             modifier = Modifier.size(20.dp)
                         )
                     }
-
-                    if (item.isCustom) {
-                        IconButton(onClick = { onDeleteClick(item) }) {
-                            Icon(
-                                imageVector = Icons.Default.Delete,
-                                contentDescription = "Delete activity",
-                                tint = MaterialTheme.colorScheme.error,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
+                    IconButton(onClick = { onDeleteClick(item) }) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Delete activity",
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
 
                     Icon(
@@ -145,7 +168,6 @@ fun ActivityCard(
                 fontWeight = FontWeight.SemiBold,
             )
 
-            // --- NEW: Scheduled Date Badge ---
             item.scheduledDate?.let { date ->
                 Surface(
                     color = MaterialTheme.colorScheme.primaryContainer,
@@ -164,7 +186,7 @@ fun ActivityCard(
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = "Scheduled: $date",
+                            text = "Scheduled: $date at ${item.scheduledTime ?: "12:00"}",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onPrimaryContainer,
                             fontWeight = FontWeight.Bold

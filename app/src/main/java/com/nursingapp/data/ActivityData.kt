@@ -12,7 +12,8 @@ data class ActivityItem(
     val supplies: List<String>,
     val category: ActivityCategory,
     val isCustom: Boolean = false,
-    val scheduledDate: String? = null
+    val scheduledDate: String? = null,
+    val scheduledTime: String? = "12:00"
 )
 
 data class SpecialDay(

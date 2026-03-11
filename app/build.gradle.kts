@@ -53,6 +53,7 @@ android {
 
 dependencies {
     implementation("androidx.compose.material3:material3:1.4.0")
+    implementation("androidx.games:games-activity:4.0.0")
     val composeBom = platform("androidx.compose:compose-bom:2024.12.01")
     implementation(composeBom)
 
