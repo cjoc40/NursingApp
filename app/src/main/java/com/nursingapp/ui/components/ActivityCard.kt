@@ -106,7 +106,7 @@ fun ActivityCard(
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    // --- NEW: Schedule Button ---
+                    // Schedule Button
                     IconButton(onClick = { showDatePicker = true }) {
                         Icon(
                             imageVector = Icons.Default.CalendarMonth,

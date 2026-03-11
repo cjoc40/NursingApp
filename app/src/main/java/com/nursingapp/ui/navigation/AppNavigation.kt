@@ -20,10 +20,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.nursingapp.ui.screens.ActivityCalendarScreen
 import com.nursingapp.ui.screens.ActivityListScreen
 import com.nursingapp.ui.screens.AddActivityScreen
@@ -144,15 +146,33 @@ fun AppNavigation() {
                     }
                 )
             }
-            composable(AppDestination.AddActivity.route) {
+            composable(
+                route = "add_activity?date={date}",
+                arguments = listOf(
+                    navArgument("date") {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    }
+                )
+            ) { backStackEntry ->
+                val selectedDate = backStackEntry.arguments?.getString("date")
+
                 AddActivityScreen(
+                    initialDate = selectedDate,
+                    onBack = {
+                        navController.popBackStack()
+                    },
                     onActivityAdded = {
                         navController.popBackStack()
                     }
                 )
             }
             composable(AppDestination.Calendar.route) {
-                CalendarScreen(modifier = Modifier.fillMaxSize())
+                CalendarScreen(
+                    modifier = Modifier.fillMaxSize(),
+                    navController = navController
+                )
             }
             composable("schedule_picker/{activityId}") { backStackEntry ->
                 val id = backStackEntry.arguments?.getString("activityId")?.toIntOrNull() ?: 0

@@ -11,7 +11,6 @@ object ActivityRepository {
     private val gson = Gson()
 
     val customActivities = mutableStateListOf<ActivityItem>()
-
     fun initialize(context: Context) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val json = prefs.getString(ACTIVITIES_KEY, null)
@@ -19,15 +18,22 @@ object ActivityRepository {
         if (json != null) {
             val type = object : TypeToken<List<ActivityItem>>() {}.type
             val saved: List<ActivityItem> = gson.fromJson(json, type)
+
+            val sanitized = saved.map { item ->
+                item.copy(
+                    instructions = item.instructions ?: emptyList(),
+                    benefits = item.benefits ?: emptyList(),
+                    supplies = item.supplies ?: emptyList()
+                )
+            }
+
             customActivities.clear()
-            customActivities.addAll(saved)
+            customActivities.addAll(sanitized)
         } else {
-            // If first time opening the app, load the built-in ones into the mutable state
             customActivities.addAll(allActivityItems)
             save(context)
         }
     }
-
     fun addActivity(
         context: Context,
         name: String,
@@ -61,19 +67,23 @@ object ActivityRepository {
         save(context)
     }
     fun scheduleActivity(context: Context, item: ActivityItem, date: String) {
+        // Check if it's already in customActivities
         val index = customActivities.indexOfFirst { it.id == item.id }
+
         if (index != -1) {
+            // Update existing custom activity
             customActivities[index] = customActivities[index].copy(scheduledDate = date)
-            save(context)
+        } else {
+            customActivities.add(item.copy(scheduledDate = date))
         }
+        save(context)
     }
+
     fun unscheduleActivity(context: Context, item: ActivityItem) {
-        // 1. Check custom activities
         val customIndex = customActivities.indexOfFirst { it.id == item.id }
         if (customIndex != -1) {
             customActivities[customIndex] = customActivities[customIndex].copy(scheduledDate = null)
             save(context)
-            return
         }
     }
     private fun save(context: Context) {
