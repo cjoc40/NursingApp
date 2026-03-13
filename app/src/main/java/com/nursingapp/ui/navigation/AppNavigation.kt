@@ -33,7 +33,6 @@ import com.nursingapp.ui.screens.AddSongScreen
 import com.nursingapp.ui.screens.CalendarScreen
 import com.nursingapp.ui.screens.QuizListScreen
 
-/** Sealed class describing each top-level navigation destination. */
 sealed class AppDestination(
     val route: String,
     val label: String,

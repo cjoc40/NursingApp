@@ -18,113 +18,105 @@ import java.util.*
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ActivityCalendarScreen(
-    activityId: Int, // Received from navigation
+    activityId: Int,
     onScheduleConfirmed: () -> Unit
 ) {
     val context = LocalContext.current
     val datePickerState = rememberDatePickerState()
 
-    // Find the specific activity the user is trying to schedule
+    // --- NEW: Time Picker State ---
+    val timePickerState = rememberTimePickerState(initialHour = 12, initialMinute = 0)
+    var showTimePicker by remember { mutableStateOf(false) }
+
     val activityToSchedule = remember(activityId) {
         (allActivityItems + ActivityRepository.customActivities).find { it.id == activityId }
     }
     val selectedMillis = datePickerState.selectedDateMillis
 
+    // Time Picker Dialog
+    if (showTimePicker) {
+        TimePickerDialog(
+            onDismissRequest = { showTimePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    if (selectedMillis != null && activityToSchedule != null) {
+                        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).apply {
+                            timeZone = TimeZone.getTimeZone("UTC")
+                        }
+                        val dateString = sdf.format(Date(selectedMillis))
+
+                        // Format the specific activity time
+                        val timeString = String.format("%02d:%02d", timePickerState.hour, timePickerState.minute)
+
+                        // FIX: Pass all three parameters now
+                        ActivityRepository.scheduleActivity(context, activityToSchedule, dateString, timeString)
+                        onScheduleConfirmed()
+                    }
+                    showTimePicker = false
+                }) { Text("Confirm All") }
+            }
+        ) {
+            TimePicker(state = timePickerState)
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Schedule Activity") },
-
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                )
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
             )
         }
     ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) {
+        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
             if (activityToSchedule == null) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Activity not found.")
-                }
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("Activity not found.") }
             } else {
-                // 1. Header showing what we are scheduling
+                // Header
                 Card(
                     modifier = Modifier.padding(16.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = "Scheduling: ${activityToSchedule.name}",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = activityToSchedule.category.displayName,
-                            style = MaterialTheme.typography.bodySmall
-                        )
+                        Text(text = "Scheduling: ${activityToSchedule.name}", fontWeight = FontWeight.Bold)
                     }
                 }
 
-                // 2. The Calendar View
-                DatePicker(
-                    state = datePickerState,
-                    showModeToggle = false,
-                    modifier = Modifier.weight(1f) // Takes up available space
-                )
+                // Date Picker
+                DatePicker(state = datePickerState, showModeToggle = false, modifier = Modifier.weight(1f))
 
-                // 3. Selection & Confirmation
-                Surface(
-                    tonalElevation = 8.dp,
-                    shadowElevation = 8.dp,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
+                // Footer with "Next" or "Confirm"
+                Surface(tonalElevation = 8.dp, shadowElevation = 8.dp, modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(24.dp)) {
                         if (selectedMillis != null) {
-                            // FIX: Force UTC to prevent the date from shifting to the previous day
-                            val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).apply {
-                                timeZone = TimeZone.getTimeZone("UTC")
-                            }
-                            val dateString = sdf.format(Date(selectedMillis))
-
-                            // Check for holiday
-                            val monthDaySdf = SimpleDateFormat("MM-dd", Locale.getDefault()).apply {
-                                timeZone = TimeZone.getTimeZone("UTC")
-                            }
-
-                            Text(
-                                "Target Date: $dateString",
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.Bold
-                            )
-
-                            Spacer(modifier = Modifier.height(16.dp))
-
                             Button(
-                                onClick = {
-                                    // SAVE to Repository
-                                    ActivityRepository.scheduleActivity(context, activityToSchedule, dateString)
-                                    onScheduleConfirmed() // Go back to list
-                                },
+                                onClick = { showTimePicker = true }, // Trigger Time Picker next
                                 modifier = Modifier.fillMaxWidth()
                             ) {
-                                Icon(Icons.Default.Check, contentDescription = null)
+                                Icon(Icons.Default.Check, null)
                                 Spacer(Modifier.width(8.dp))
-                                Text("Confirm Selection")
+                                Text("Select Time & Confirm")
                             }
                         } else {
-                            Text(
-                                "Please tap a date above to schedule this activity.",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                            Text("Please tap a date above to continue.", color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }
             }
         }
     }
+}
+
+@Composable
+fun TimePickerDialog(
+    onDismissRequest: () -> Unit,
+    confirmButton: @Composable () -> Unit,
+    content: @Composable () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismissRequest,
+        confirmButton = confirmButton,
+        dismissButton = { TextButton(onClick = onDismissRequest) { Text("Cancel") } },
+        text = { content() }
+    )
 }

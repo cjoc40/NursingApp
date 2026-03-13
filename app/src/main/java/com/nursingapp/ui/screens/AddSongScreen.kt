@@ -1,6 +1,5 @@
 package com.nursingapp.ui.screens
 
-import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -13,6 +12,7 @@ import com.nursingapp.data.SongRepository
 fun AddSongScreen(onSongAdded: () -> Unit) {
     var title by remember { mutableStateOf("") }
     var artist by remember { mutableStateOf("") }
+    var lyrics by remember { mutableStateOf("") }
     var youtubeLink by remember { mutableStateOf("") }
     val context = LocalContext.current
 
@@ -36,6 +36,14 @@ fun AddSongScreen(onSongAdded: () -> Unit) {
         )
 
         OutlinedTextField(
+            value = lyrics,
+            onValueChange = { lyrics = it },
+            label = { Text("Song Lyrics (Optional)") },
+            modifier = Modifier.fillMaxWidth().height(150.dp), // Taller for lyrics
+            maxLines = 5
+        )
+
+        OutlinedTextField(
             value = youtubeLink,
             onValueChange = { youtubeLink = it },
             label = { Text("YouTube Link") },
@@ -46,7 +54,7 @@ fun AddSongScreen(onSongAdded: () -> Unit) {
         Button(
             onClick = {
                 if (title.isNotBlank() && youtubeLink.isNotBlank()) {
-                    SongRepository.addSong(context, title, artist, youtubeLink)
+                    SongRepository.addSong(context, title, artist, youtubeLink, lyrics)
                     onSongAdded()
                 }
             },

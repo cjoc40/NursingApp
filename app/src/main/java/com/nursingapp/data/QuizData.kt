@@ -1,16 +1,5 @@
 package com.nursingapp.data
 
-import com.nursingapp.R
-
-/**
- * Represents a single quiz question (trivia or guess-the-song).
- *
- * @param id       Unique identifier.
- * @param question The question / song lyric prompt shown face-up.
- * @param answer   The answer revealed when the card is tapped.
- * @param hint     Optional extra hint shown below the question.
- * @param category Whether this is a [QuizCategory.TRIVIA] or [QuizCategory.GUESS_THE_SONG] card.
- */
 data class QuizItem(
     val id: Int,
     val question: String,
@@ -18,6 +7,8 @@ data class QuizItem(
     val hint: String = "",
     val category: QuizCategory,
     val youtubeId: String? = null,
+    val lyrics: String? = null,
+    val apiCategoryId: Int? = null,
     val isCustom: Boolean = false // NEW
 )
 
@@ -27,7 +18,7 @@ enum class QuizCategory(val displayName: String) {
 }
 
 val allQuizItems: List<QuizItem> = listOf(
-    // ── Trivia ──────────────────────────────────────────────────────────────
+    // Trivia
     QuizItem(
         id = 1,
         question = "What year did World War II end?",
@@ -155,7 +146,7 @@ val allQuizItems: List<QuizItem> = listOf(
     // ── Guess the Song ──────────────────────────────────────────────────────
     QuizItem(
         id = 21,
-        question = "You ain't nothing but a hound dog",
+        question = "♪ \"You ain't nothing but a hound dog…\"",
         answer = "Hound Dog – Elvis Presley (1956)",
         category = QuizCategory.GUESS_THE_SONG,
         youtubeId = "-eHJ12Vhpyc"

@@ -45,7 +45,6 @@ object SongRepository {
         difficulty: String? = null
     ) {
         try {
-            // Use the parameters categoryId and difficulty here
             val response = api.getQuestions(
                 amount = 5,
                 category = categoryId,
@@ -72,6 +71,7 @@ object SongRepository {
                     answer = decodedAnswer,
                     hint = hintText,
                     category = QuizCategory.TRIVIA,
+                    apiCategoryId = categoryId ?: getCategoryIdFromName(result.category),
                     isCustom = true
                 )
             }
@@ -83,30 +83,43 @@ object SongRepository {
         }
     }
 
-    fun addSong(context: Context, title: String, artist: String, youtubeLink: String) {
-        // Extract the 11-character ID from various YouTube URL formats
+    // Helper to map API category names to the IDs used in Filter chips
+    private fun getCategoryIdFromName(name: String): Int? {
+        return when {
+            name.contains("General", ignoreCase = true) -> 9
+            name.contains("Music", ignoreCase = true) -> 12
+            name.contains("Science", ignoreCase = true) -> 17
+            name.contains("Sports", ignoreCase = true) -> 21
+            name.contains("Geography", ignoreCase = true) -> 22
+            name.contains("History", ignoreCase = true) -> 23
+            name.contains("Animals", ignoreCase = true) -> 27
+            else -> null
+        }
+    }
+
+    fun addSong(
+        context: Context,
+        title: String,
+        artist: String,
+        youtubeLink: String,
+        lyrics: String
+    ) {
         val videoId = when {
-            youtubeLink.contains("v=") -> {
-                youtubeLink.substringAfter("v=").substringBefore("&")
-            }
-            youtubeLink.contains("youtu.be/") -> {
-                youtubeLink.substringAfter("youtu.be/").substringBefore("?")
-            }
-            youtubeLink.contains("shorts/") -> {
-                youtubeLink.substringAfter("shorts/").substringBefore("?")
-            }
+            youtubeLink.contains("v=") -> youtubeLink.substringAfter("v=").substringBefore("&")
+            youtubeLink.contains("youtu.be/") -> youtubeLink.substringAfter("youtu.be/").substringBefore("?")
+            youtubeLink.contains("shorts/") -> youtubeLink.substringAfter("shorts/").substringBefore("?")
             else -> youtubeLink.trim()
         }
 
         val newSong = QuizItem(
             id = (System.currentTimeMillis() % Int.MAX_VALUE).toInt(),
-            question = "Guess this song! 🎵",
+            question = "",
             answer = "$title – $artist",
             category = QuizCategory.GUESS_THE_SONG,
             youtubeId = videoId,
+            lyrics = "♪ \"$lyrics…\"",
             isCustom = true
         )
-
         songs.add(newSong)
         saveToPrefs(context)
     }

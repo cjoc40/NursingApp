@@ -14,11 +14,10 @@ interface TriviaApiService {
     ): TriviaResponse
 }
 
-// Add incorrect_answers to your data model so we can use them
 data class TriviaResult(
     val category: String,
-    val type: String, // "multiple" or "boolean"
+    val type: String,
     val question: String,
     val correct_answer: String,
-    val incorrect_answers: List<String> // New field
+    val incorrect_answers: List<String>
 )
